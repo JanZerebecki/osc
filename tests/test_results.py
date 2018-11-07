@@ -30,13 +30,18 @@ class TestResults(OscTestCase):
         return sys.stdout.getvalue()
 
     @GET('http://localhost/build/testproject/_result', file='result.xml')
-    def testPrjresults(self):
+    def testPrjresultsXml(self):
         out = self._run_osc('prjresults', '--xml', 'testproject')
         self.assertEqualMultiline(out, self._get_fixture('result.xml') + '\n')
 
+    @GET('http://localhost/build/testproject/_result', file='result.xml')
+    def testPrjresults(self):
+        out = self._run_osc('prjresults', 'testproject', '--hide-legend')
+        self.assertEqualMultiline(out, self._get_fixture('result.txt'))
+
     @GET('http://localhost/build/testproject/_result', file='result-dirty.xml')
     @GET('http://localhost/build/testproject/_result?oldstate=c57e2ee592dbbf26ebf19cc4f1bc1e83', file='result.xml')
-    def testPrjresultsWatch(self):
+    def testPrjresultsWatchXml(self):
         out = self._run_osc('prjresults', '--watch', '--xml', 'testproject')
         self.assertEqualMultiline(out, self._get_fixture('result-dirty.xml') + '\n' + self._get_fixture('result.xml') + '\n')
 
