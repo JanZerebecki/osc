@@ -4318,12 +4318,27 @@ def get_prj_results(
     show_excluded=None,
     brief=False,
 ):
-    # print '----------------------------------------'
+    """ this function is only needed for backward/api compatibility; use get_package_results() and format_prj_results() instead"""
+    xml_string = show_prj_results_meta(apiurl, prj)
+    return format_prj_results(xml_string, hide_legend, csv, status_filter, name_filter, arch, repo, vertical, show_excluded, brief)
+
+def format_prj_results(
+    xml_string: str,
+    hide_legend=False,
+    csv=False,
+    status_filter=None,
+    name_filter=None,
+    arch=None,
+    repo=None,
+    vertical=None,
+    show_excluded=None,
+    brief=False,
+):
     global buildstatus_symbols
 
     r = []
 
-    f = show_prj_results_meta(apiurl, prj)
+    f = xml_string
     root = xml_fromstring(b''.join(f))
 
     if name_filter is not None:
