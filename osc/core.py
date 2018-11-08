@@ -4304,6 +4304,23 @@ def get_package_results(apiurl: str, project: str, package: Optional[str] = None
             yield xml
     yield xml
 
+def is_package_results_success(xmlstring):
+    ok = ('succeeded', 'disabled', 'excluded', 'published', 'unpublished')
+
+    root = ET.fromstring(xmlstring)
+    for result in root.findall('result'):
+        if result.get('dirty') is not None:
+            return False
+        if result.get('code') not in ok:
+            return False
+        if result.get('state') not in ok:
+            return False
+        packages = result.find('status')
+        for p in packages:
+            if p.get('code') not in ok:
+                return False
+    return True
+
 
 def get_prj_results(
     apiurl: str,
