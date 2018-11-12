@@ -4266,9 +4266,12 @@ def get_package_results(apiurl: str, project: str, package: Optional[str] = None
                 waiting = True
                 break
             else:
-                pkg = result.find('status')
-                if pkg is not None and pkg.get('code') in waiting_states:
-                    waiting = True
+                packages = result.find('status')
+                for p in packages:
+                    if p.get('code') in waiting_states:
+                        waiting = True
+                        break
+                if waiting:
                     break
 
         # filter the result according to the specified multibuild_packages (flavors)
