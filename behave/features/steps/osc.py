@@ -66,6 +66,31 @@ class Osc(CommandBase):
         return cmd
 
 
+class GitOscPrecommitHook(CommandBase):
+    CONFIG_NAME = "oscrc"
+
+    def write_config(self, username=None, password=None):
+        with open(self.config, "w") as f:
+            f.write("[general]\n")
+            f.write("apiurl=https://localhost:{self.context.podman.container.ports['obs_https']}\n")
+            f.write("\n")
+            f.write(f"[https://localhost:{self.context.podman.container.ports['obs_https']}]\n")
+            f.write(f"user={username or 'Admin'}\n")
+            f.write(f"pass={password or 'opensuse'}\n")
+            f.write("credentials_mgr_class=osc.credentials.PlaintextConfigFileCredentialsManager\n")
+            f.write("sslcertck=0\n")
+            if not any((username, password)):
+                f.write("http_headers =\n")
+                # avoid the initial 401 response by using proxy auth
+                f.write("    X-Username: Admin\n")
+
+    def get_cmd(self):
+        git_osc_precommit_hook_cmd = self.context.config.userdata.get("git-osc-precommit-hook", "git-osc-precommit-hook")
+        cmd = [git_osc_precommit_hook_cmd]
+        cmd += ["--config", self.config]
+        return cmd
+
+
 class GitObs(CommandBase):
     CONFIG_NAME = "config.yml"
 
@@ -125,6 +150,16 @@ def step_impl(context, args):
 def step_impl(context, args):
     args = args.format(context=context)
     cmd = context.git_obs.get_cmd() + [args]
+    cmd = " ".join(cmd)
+    run_in_context(context, cmd, can_fail=True)
+    # remove InsecureRequestWarning that is irrelevant to the tests
+    context.cmd_stderr = re.sub(r"^.*InsecureRequestWarning.*\n  warnings.warn\(\n", "", context.cmd_stderr)
+
+
+@behave.step("I execute git-osc-precommit-hook with args \"{args}\"")
+def step_impl(context, args):
+    args = args.format(context=context)
+    cmd = context.git_osc_precommit_hook.get_cmd() + [args]
     cmd = " ".join(cmd)
     run_in_context(context, cmd, can_fail=True)
     # remove InsecureRequestWarning that is irrelevant to the tests
