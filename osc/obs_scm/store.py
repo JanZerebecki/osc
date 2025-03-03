@@ -6,6 +6,8 @@ and shouldn't be used in any code outside osc.
 
 
 import os
+import shutil
+import subprocess
 
 from .. import oscerr
 from .._private import api
@@ -377,6 +379,21 @@ store = '.osc'
 
 def check_store_version(dir):
     global store
+
+    if None != shutil.which("git"):
+        check = subprocess.run(["git", "ls-files", "**/.osc/*"], capture_output=True)
+        if not ( 0 == check.returncode and b"" == check.stdout and b"" == check.stderr ):
+            msg = (
+                f'Error: git ls-files \'**/.osc/*\' returned "{check.returncode}" instead of 0 with '
+                f'stdout as "{check.stdout}" and stderr as "{check.stderr}" inastead of empty.\n'
+                f'Error: "{os.path.abspath(dir)}" has a .osc directory in the git index.\n'
+                f'Error: Please change any commits to not contain it or unstage it.'
+            )
+            raise oscerr.NoWorkingCopy(msg)
+    # TODO why does this not work?
+    elif os.path.exists(os.path.join(dir, ".git")):
+        msg = f'Error: "{os.path.abspath(dir)}" has a .git directory, but not git executable in path, please install git.'
+        raise oscerr.NoWorkingCopy(msg)
 
     versionfile = os.path.join(dir, store, '_osclib_version')
     try:
